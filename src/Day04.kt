@@ -17,6 +17,7 @@ fun main() {
     }
 
     val space = Regex("\\s+")
+    val digit = Regex("\\d+")
 
     fun part1(input: List<String>): Int {
         val sum = input.sumOf { line ->
@@ -46,8 +47,8 @@ fun main() {
                 val cardNumber = cardNumberStr.toInt()
 
                 val (winningNumbersStr, myNumbersStr) = numbers.split(" | ")
-                val winningNumbers = winningNumbersStr.trim().split(space).map { it.trim().toInt() }
-                val myNumbers = myNumbersStr.trim().split(space).map { it.trim().toInt() }
+                val winningNumbers = winningNumbersStr.matchAll(digit).map { it.toInt() }
+                val myNumbers = myNumbersStr.matchAll(digit).map { it.toInt() }
 
                 Card(cardNumber, winningNumbers, myNumbers)
             }
@@ -82,11 +83,11 @@ fun main() {
     val part2 = part2(testInput)
     println("(Test) Part 2: expected: $part2Expected, got: $part2")
 
-    val input = readInput("Day${day}")
-
-    val part1Real = part1(input)
-    println("(Real) Part 1: $part1Real")
-
-    val part2Real = part2(input)
-    println("(Real) Part 2: $part2Real")
+//    val input = readInput("Day${day}")
+//
+//    val part1Real = part1(input)
+//    println("(Real) Part 1: $part1Real")
+//
+//    val part2Real = part2(input)
+//    println("(Real) Part 2: $part2Real")
 }

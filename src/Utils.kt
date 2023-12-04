@@ -19,3 +19,18 @@ fun String.md5() = BigInteger(1, MessageDigest.getInstance("MD5").digest(toByteA
  * The cleaner shorthand for printing output.
  */
 fun Any?.println() = println(this)
+
+fun String.matchAll(regex: Regex) = regex.findAll(this.trim()).map { it.value.trim() }.toList()
+fun String.matchNamedGroups(regex: Regex) = regex.findAll(this.trim()).map {
+    val groups = it.groups
+    if (groups is MatchNamedGroupCollection) {
+        groups
+    } else {
+        error("Not a named group")
+    }
+
+}.toList()
+
+fun String.matchGroups(regex: Regex) = regex.findAll(this.trim()).map {
+    it.groups
+}.toList()
