@@ -12,7 +12,7 @@ fun main() {
         var instances = 1
 
         fun copyFrom(card: Card) {
-            instances += instances card.instances
+            instances += card.instances
         }
     }
 
@@ -54,18 +54,15 @@ fun main() {
         }
 
         for ((i, card) in allCards.withIndex()) {
-            if (card.count > 1) {
+            if (card.count > 0) {
                 val from = i + 1
                 val to = from + card.count
                 for (j in from until to) {
                     if (j < allCards.size) {
-                        allCards[j].copyFrom(card)
+                        val nextCard = allCards[j]
+                        nextCard.copyFrom(card)
                     }
                 }
-            }
-            println("Cards after $i")
-            for ((pi, pcard) in allCards.withIndex()) {
-                println("card ${pcard.number}: count: ${pcard.count} instances: ${pcard.instances}")
             }
         }
 
