@@ -82,7 +82,6 @@ fun main() {
     val part1Real = part1(input)
     println("(Real) Part 1: $part1Real")
 
-    val part2RealExpected = ""
     val part2Real = part2(input)
     println("(Real) Part 2: $part2Real")
 }
