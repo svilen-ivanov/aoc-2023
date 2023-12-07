@@ -45,7 +45,7 @@ fun main() {
         println("races: $races")
         val waysToBeat = races.map { it.waysToBeat() }
 //        println(waysToBeat)
-        val res = waysToBeat.fold(1L) { acc, i -> acc * i }
+        val res = waysToBeat.mul()
         return res.toString()
     }
 

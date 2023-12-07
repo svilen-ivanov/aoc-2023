@@ -1,3 +1,4 @@
+import java.math.BigDecimal
 import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.io.path.Path
@@ -34,3 +35,8 @@ fun String.matchNamedGroups(regex: Regex) = regex.findAll(this.trim()).map {
 fun String.matchGroups(regex: Regex) = regex.findAll(this.trim()).map {
     it.groups
 }.toList()
+
+fun List<Long>.mul() = fold(1L) { acc, i -> acc * i }
+fun List<Int>.mul() = fold(1) { acc, i -> acc * i }
+fun List<BigInteger>.mul() = fold(BigInteger.ONE) { acc, i -> acc * i }
+fun List<BigDecimal>.mul() = fold(BigDecimal.ONE) { acc, i -> acc * i }
