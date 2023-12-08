@@ -93,6 +93,7 @@ fun main() {
         }
         val nodesByName = nodes.associateBy { it.name }
         val startNodes = nodesByName.filter { (_, v) -> v.name.endsWith("A") }
+        println("startNodes: $startNodes")
         val stepsToReachEnd = startNodes
             .map { (_, v) -> Navigator(nodesByName, v) }
             .map {
@@ -107,11 +108,15 @@ fun main() {
                 error("")
             }
         println(stepsToReachEnd)
-        stepsToReachEnd.map { factorize(it) }.flatten().distinct().mul().println()
+        stepsToReachEnd.map { factorize(it) }.flatten().distinct().map { it.toLong() }.mul().println()
         stepsToReachEnd.map { factorize(it) }.println()
         stepsToReachEnd.map { factorize(it) }.flatten().sorted().println()
         stepsToReachEnd.map { factorize(it) }.flatten().sorted().distinct().println()
-        stepsToReachEnd.map { factorize(it) }.flatten().sorted().distinct().mul().println()
+        val t = stepsToReachEnd.map { factorize(it) }.flatten().sorted().distinct().map { it.toLong() }.mul()
+
+        stepsToReachEnd.forEach { s ->
+            println("$s -> $t / $s -> ${t / s}")
+        }
 
         return 0
     }

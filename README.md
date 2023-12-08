@@ -1,4 +1,7 @@
+### The code is extremely _ugly_ and is not refactored in anyway once it produced the right result. This is done on purpose, I think it be curious to go back and review the strategy and all dead ends.
+
 # aoc-2023
+
 
 Welcome to the Advent of Code[^aoc] Kotlin project created by [svilen-ivanov][github] using the [Advent of Code Kotlin Template][template] delivered by JetBrains.
 
