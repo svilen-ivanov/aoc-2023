@@ -54,7 +54,7 @@ fun main() {
             val readings = line.split(space).map { it.toLong() }
             val p = processReadings(readings)
             val x = predict(p)
-            sum += x.toInt()
+            sum += x
         }
         return sum
     }
@@ -65,7 +65,7 @@ fun main() {
             val readings = line.split(space).map { it.toLong() }
             val p = processReadings(readings)
             val x = predict(p)
-            sum += x.toInt()
+            sum += x
         }
 
         return sum
