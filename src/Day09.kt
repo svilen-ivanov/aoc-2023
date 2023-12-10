@@ -29,11 +29,9 @@ fun main() {
                 break
             }
         } while (true)
-        allReadings.println()
+        allReadings.printme()
         return allReadings
     }
-
-    val space = Regex("\\s+")
 
     fun predict(p: MutableList<MutableList<Long>>): Long {
         var curr = p.last().first()
@@ -43,9 +41,22 @@ fun main() {
             p[i].add(0, curr)
         }
         for (x in p) {
-            x.println()
+            x.printme()
         }
-        return curr.also { it.println() }
+        return curr.also { it.printme() }
+    }
+
+    val space = Regex("\\s+")
+    fun part2(input: List<String>): Long {
+        var sum = 0L
+        for (line in input) {
+            val readings = line.split(space).map { it.toLong() }
+            val p = processReadings(readings)
+            val x = predict(p)
+            sum += x
+        }
+
+        return sum
     }
 
     fun part1(input: List<String>): Long {
@@ -59,17 +70,7 @@ fun main() {
         return sum
     }
 
-    fun part2(input: List<String>): Long {
-        var sum = 0L
-        for (line in input) {
-            val readings = line.split(space).map { it.toLong() }
-            val p = processReadings(readings)
-            val x = predict(p)
-            sum += x
-        }
 
-        return sum
-    }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day${day}_test")

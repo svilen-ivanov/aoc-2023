@@ -65,22 +65,7 @@ fun main() {
         }
     }
 
-    fun factorize(number: Int): List<Int> {
-        var n = number
-        val factors = mutableListOf<Int>()
-        var i = 2
-        while (i <= n) {
-            if (n % i == 0) {
-                factors.add(i)
-                n /= i
-            } else {
-                i++
-            }
-        }
-        require(factors.mul() == number)
-        return factors
-    }
-    fun part2(input: List<String>): Int {
+    fun part2(input: List<String>): Long {
         val instructions = input[0]
         val rest = input.subList(2, input.size)
         val split = Regex("\\W+")
@@ -108,22 +93,11 @@ fun main() {
                 error("")
             }
         println(stepsToReachEnd)
-        stepsToReachEnd.map { factorize(it) }.flatten().distinct().map { it.toLong() }.mul().println()
-        stepsToReachEnd.map { factorize(it) }.println()
-        stepsToReachEnd.map { factorize(it) }.flatten().sorted().println()
-        stepsToReachEnd.map { factorize(it) }.flatten().sorted().distinct().println()
-        val t = stepsToReachEnd.map { factorize(it) }.flatten().sorted().distinct().map { it.toLong() }.mul()
+        val lcm = stepsToReachEnd.lcm().printme()
+        null.printme()
 
-        stepsToReachEnd.forEach { s ->
-            println("$s -> $t / $s -> ${t / s}")
-        }
-
-        return 0
+        return lcm
     }
-
-
-
-
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day${day}_test")
@@ -142,5 +116,5 @@ fun main() {
 //    println("(Real) Part 1: $part1Real")
 
     val part2Real = part2(input)
-    println("(Real) Part 2: $part2Real")
+    println("(Real) Part 2: 16342438708751 == $part2Real")
 }
