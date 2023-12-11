@@ -18,7 +18,8 @@ sealed class Kind {
 
 class Universe {
     var space = mutableMapOf<Point, Kind>()
-//    val grow = 9
+
+    //    val grow = 9
     val grow = (1_000_000 - 1).toLong()
     var dim: Point = Point(0, 0)
     val galaxies by lazy { space.filterValues { it is Kind.Galaxy } as Map<Point, Kind.Galaxy> }
@@ -86,7 +87,6 @@ class Universe {
             }
         }
     }
-
 
 
     fun shiftColumn(x: Long) {
