@@ -1,28 +1,28 @@
-data class Point(val x: Int, val y: Int) {
-    operator fun plus(other: Point): Point {
-        return Point(x + other.x, y + other.y)
+data class Point2(val x: Int, val y: Int) {
+    operator fun plus(other: Point2): Point2 {
+        return Point2(x + other.x, y + other.y)
     }
 
     fun isInvalid(fieldMap: FieldMap): Boolean {
         return x < 0 || y < 0 || x > fieldMap.dim.x || y > fieldMap.dim.y
     }
 
-    fun reverse(): Point {
-        return Point(-x, -y)
+    fun reverse(): Point2 {
+        return Point2(-x, -y)
     }
 }
 
-sealed class Tile(val tile: String, val tileChar: String, val pos: Point) {
+sealed class Tile(val tile: String, val tileChar: String, val pos: Point2) {
     var mark: String? = null
-    class Ground(pos: Point) : Tile(".", ".", pos)
-    class Start(pos: Point) : Tile("S", "S", pos) {
+    class Ground(pos: Point2) : Tile(".", ".", pos)
+    class Start(pos: Point2) : Tile("S", "S", pos) {
         fun getStart(fieldMap: FieldMap): List<Pipe> {
             return buildList {
                 val points = listOf(
-                    Point(0, -1),
-                    Point(0, 1),
-                    Point(-1, 0),
-                    Point(1, 0),
+                    Point2(0, -1),
+                    Point2(0, 1),
+                    Point2(-1, 0),
+                    Point2(1, 0),
                 )
                 for (point in points) {
                     val neighbour = point + pos
@@ -66,16 +66,16 @@ sealed class Tile(val tile: String, val tileChar: String, val pos: Point) {
 sealed class Pipe(
     tile: String,
     tileChar: String,
-    val conn1: Point,
-    val conn2: Point,
-    pos: Point,
+    val conn1: Point2,
+    val conn2: Point2,
+    pos: Point2,
 ) : Tile(tile, tileChar, pos) {
-    class Vertical(pos: Point) : Pipe("┃", "|", Point(0, -1), Point(0, 1), pos)
-    class Horizontal(pos: Point) : Pipe("━", "-", Point(-1, 0), Point(1, 0), pos)
-    class NorthEast(pos: Point) : Pipe("┗", "L", Point(0, -1), Point(1, 0), pos)
-    class NorthWest(pos: Point) : Pipe("┛", "J", Point(-1, 0), Point(0, -1), pos)
-    class SouthEast(pos: Point) : Pipe("┏", "F", Point(0, 1), Point(1, 0), pos)
-    class SouthWest(pos: Point) : Pipe("┓", "7", Point(-1, 0), Point(0, 1), pos)
+    class Vertical(pos: Point2) : Pipe("┃", "|", Point2(0, -1), Point2(0, 1), pos)
+    class Horizontal(pos: Point2) : Pipe("━", "-", Point2(-1, 0), Point2(1, 0), pos)
+    class NorthEast(pos: Point2) : Pipe("┗", "L", Point2(0, -1), Point2(1, 0), pos)
+    class NorthWest(pos: Point2) : Pipe("┛", "J", Point2(-1, 0), Point2(0, -1), pos)
+    class SouthEast(pos: Point2) : Pipe("┏", "F", Point2(0, 1), Point2(1, 0), pos)
+    class SouthWest(pos: Point2) : Pipe("┓", "7", Point2(-1, 0), Point2(0, 1), pos)
 //    class Vertical(pos: Point) : Pipe("|", "|", Point(0, -1), Point(0, 1), pos)
 //    class Horizontal(pos: Point) : Pipe("-", "-", Point(-1, 0), Point(1, 0), pos)
 //    class NorthEast(pos: Point) : Pipe("\\", "L", Point(0, -1), Point(1, 0), pos)
@@ -97,11 +97,11 @@ sealed class Pipe(
 //    }
 }
 
-data class FieldMap(val tiles: Map<Point, Tile>, val dim: Point) {
+data class FieldMap(val tiles: Map<Point2, Tile>, val dim: Point2) {
     fun closeLoop(): FieldMap {
         val start = start
         val startTiles = start.getStart(this@FieldMap)
-        val tiles = buildMap<Point, Tile> {
+        val tiles = buildMap<Point2, Tile> {
             putAll(tiles)
             val c1 = findConnection(start.pos, startTiles[0])
             val c2 = findConnection(start.pos, startTiles[1])
@@ -122,7 +122,7 @@ data class FieldMap(val tiles: Map<Point, Tile>, val dim: Point) {
         return FieldMap(tiles, dim)
     }
 
-    private fun findConnection(pos: Point, pipe: Pipe): Any {
+    private fun findConnection(pos: Point2, pipe: Pipe): Any {
         if (pos == pipe.pos + pipe.conn1) {
             return pipe.conn1.reverse()
         } else if (pos == pipe.pos + pipe.conn2) {
@@ -135,7 +135,7 @@ data class FieldMap(val tiles: Map<Point, Tile>, val dim: Point) {
     fun printField() {
         for (y in 0..dim.y) {
             for (x in 0..dim.x) {
-                val point = Point(x, y)
+                val point = Point2(x, y)
                 val tile = tiles.getValue(point)
 //                print(tile.mark ?: tile.tile)
                 print(tile.mark ?: when (tile) {
@@ -159,7 +159,7 @@ data class FieldMap(val tiles: Map<Point, Tile>, val dim: Point) {
 //    }
 }
 
-class TraversePipe(val pipe: Pipe, val from: Point) {
+class TraversePipe(val pipe: Pipe, val from: Point2) {
     val next = when (from) {
         pipe.pos + pipe.conn1 -> pipe.pos + pipe.conn2
         pipe.pos + pipe.conn2 -> pipe.pos + pipe.conn1
@@ -168,7 +168,7 @@ class TraversePipe(val pipe: Pipe, val from: Point) {
 }
 
 class Traverse(val fieldMap: FieldMap, val startPipe: Pipe) {
-    val traversed = mutableMapOf<Point, Tile>()
+    val traversed = mutableMapOf<Point2, Tile>()
     var steps = 0
     fun traverse(): Boolean {
         traversed.put(fieldMap.start.pos, fieldMap.start)
@@ -200,11 +200,11 @@ class Traverse(val fieldMap: FieldMap, val startPipe: Pipe) {
     }
 
     fun toFieldLoop(): FieldMap {
-        val fieldLoop = mutableMapOf<Point, Tile>()
+        val fieldLoop = mutableMapOf<Point2, Tile>()
         val dim = fieldMap.dim
         for (y in 0..dim.y) {
             for (x in 0..dim.x) {
-                val point = Point(x, y)
+                val point = Point2(x, y)
                 val tile = traversed[point]
                 fieldLoop[point] = tile ?: Tile.Ground(point)
             }
@@ -217,7 +217,7 @@ class Traverse(val fieldMap: FieldMap, val startPipe: Pipe) {
         val dim = fieldMap.dim
         for (y in 0..dim.y) {
             for (x in 0..dim.x) {
-                val point = Point(x, y)
+                val point = Point2(x, y)
                 val tile = traversed[point]
                 print(tile?.tile ?: ".")
             }
@@ -242,11 +242,11 @@ fun main() {
     }
 
     fun parseFieldMap(input: List<String>): FieldMap {
-        val tiles = mutableMapOf<Point, Tile>()
-        var dim: Point? = null
+        val tiles = mutableMapOf<Point2, Tile>()
+        var dim: Point2? = null
         for ((y, line) in input.withIndex()) {
             for ((x, tileStr) in line.withIndex()) {
-                val pos = Point(x, y)
+                val pos = Point2(x, y)
                 val tile = when (tileStr) {
                     '.' -> Tile.Ground(pos)
                     'S' -> Tile.Start(pos)
@@ -262,7 +262,7 @@ fun main() {
                 dim = if (dim == null) {
                     pos
                 } else {
-                    Point(maxOf(dim.x, pos.x), maxOf(dim.y, pos.y))
+                    Point2(maxOf(dim.x, pos.x), maxOf(dim.y, pos.y))
                 }
             }
         }
@@ -295,7 +295,7 @@ fun main() {
         var bottomCount = 0
         val tilePoint = tile.pos
         for (x in (tilePoint.x + 1)..loop.dim.x) {
-            val point = Point(x, tilePoint.y)
+            val point = Point2(x, tilePoint.y)
             val tileAtPos = loop.tiles.getValue(point)
             if (tileAtPos is Tile.Ground) {
                 continue
@@ -340,7 +340,7 @@ fun main() {
         var count = 0;
         for (y in 0..loop.dim.y) {
             for (x in 0..loop.dim.x) {
-                val point = Point(x, y)
+                val point = Point2(x, y)
                 val tile = loop.tiles.getValue(point)
                 if (isInside(tile, loop)) {
                     count++
