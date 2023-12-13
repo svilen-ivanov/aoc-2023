@@ -1,28 +1,27 @@
 import kotlin.math.abs
 
-data class Point(val x: Long, val y: Long) {
-    fun distanceTo(other: Point): Long {
-        return abs(x - other.x) + abs(y - other.y)
-        +(if (x != other.x) 1 else 0) + (if (y != other.y) 1 else 0)
+data class Point3(val x: Long, val y: Long) {
+    fun distanceTo(other: Point3): Long {
+        return abs(x - other.x) + abs(y - other.y) + (if (x != other.x) 1 else 0) + (if (y != other.y) 1 else 0)
     }
 }
 
 sealed class Kind {
-    abstract var coord: Point
+    abstract var coord: Point3
     abstract val char: String
     var num = 0
 
-    data class Space(override val char: String, override var coord: Point) : Kind()
-    data class Galaxy(override val char: String, override var coord: Point) : Kind()
+    data class Space(override val char: String, override var coord: Point3) : Kind()
+    data class Galaxy(override val char: String, override var coord: Point3) : Kind()
 }
 
 class Universe {
-    var space = mutableMapOf<Point, Kind>()
+    var space = mutableMapOf<Point3, Kind>()
 
     //    val grow = 9
     val grow = (1_000_000 - 1).toLong()
-    var dim: Point = Point(0, 0)
-    val galaxies by lazy { space.filterValues { it is Kind.Galaxy } as Map<Point, Kind.Galaxy> }
+    var dim: Point3 = Point3(0, 0)
+    val galaxies by lazy { space.filterValues { it is Kind.Galaxy } as Map<Point3, Kind.Galaxy> }
     val galaxyByNumber by lazy { galaxies.values.associateBy { it.num } }
 
     val rowsWithPoints = mutableSetOf<Long>()
@@ -50,7 +49,7 @@ class Universe {
     fun printSpace() {
         for (y in 0..dim.y) {
             for (x in 0..dim.x) {
-                val point = Point(x, y)
+                val point = Point3(x, y)
                 val kind = space[point]
                 print(
                     when (kind) {
@@ -66,14 +65,14 @@ class Universe {
     fun shiftRow(y: Long) {
         space = space.mapKeysTo(mutableMapOf()) { (point) ->
             if (point.y >= y) {
-                Point(point.x, point.y + grow)
+                Point3(point.x, point.y + grow)
             } else {
                 point
             }
         }.onEach { (p, k) ->
             k.coord = p
         }
-        dim = Point(dim.x, dim.y + grow)
+        dim = Point3(dim.x, dim.y + grow)
         recalcPoints()
     }
 
@@ -92,7 +91,7 @@ class Universe {
     fun shiftColumn(x: Long) {
         space = space.mapKeysTo(mutableMapOf()) { (point) ->
             if (point.x >= x) {
-                Point(point.x + grow, point.y)
+                Point3(point.x + grow, point.y)
             } else {
                 point
             }
@@ -100,7 +99,7 @@ class Universe {
             k.coord = p
         }
         recalcPoints()
-        dim = Point(dim.x + grow, dim.y)
+        dim = Point3(dim.x + grow, dim.y)
     }
 
     fun expand() {
@@ -147,7 +146,7 @@ class Universe {
     companion object {
         fun expand(source: Universe): Universe {
             val newUniverse = Universe()
-            newUniverse.space = (mutableMapOf<Point, Kind>() + source.space).toMutableMap()
+            newUniverse.space = (mutableMapOf<Point3, Kind>() + source.space).toMutableMap()
             newUniverse.dim = source.dim
             newUniverse.expand()
             return newUniverse
@@ -160,10 +159,10 @@ fun main() {
 
     fun createUniverse(input: List<String>): Universe {
         val universe = Universe()
-        var p: Point? = null
+        var p: Point3? = null
         for ((y, line) in input.withIndex()) {
             for ((x, char) in line.withIndex()) {
-                p = Point(x.toLong(), y.toLong())
+                p = Point3(x.toLong(), y.toLong())
                 when (char) {
                     '.' -> universe.space[p] = Kind.Space(char.toString(), p)
                     '#' -> universe.space[p] = Kind.Galaxy(char.toString(), p)
