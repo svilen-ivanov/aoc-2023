@@ -1,8 +1,4 @@
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.coroutines.coroutineContext
 
 sealed class Spring {
     abstract val char: String
@@ -63,51 +59,55 @@ sealed class Outcome {
 }
 
 class Solve() {
-    var nest = 0L
-    var solutions = 0L
-
-
-
-    suspend fun solve(row: Row) {
-        val outcome = checkCanBeValid(row)
-        when (outcome) {
-            is Outcome.Solution -> {
-                solutions++
-                return
+    fun solve(row: Row): Long {
+//        println("Solving row: $row")
+        val i = row.springs.indexOfFirst { it is Spring.Unknown }
+        return if (i == -1) {
+            if (isSolved(row)) {
+                1
+            } else {
+                0
             }
-
-            is Outcome.Stop -> {
-                return
-            }
-
-            is Outcome.Continue -> {
-                solve(row, Spring.Damaged)
-                solve(row, Spring.Operational)
-            }
+        } else {
+            solve(row, i, Spring.Damaged) + solve(row, i, Spring.Operational)
         }
     }
 
-    private suspend fun solve(row: Row, spring: Spring) {
+    private fun solve(row: Row, i: Int, spring: Spring): Long {
         require(spring is Spring.Damaged || spring is Spring.Operational)
-
         val newSprings = row.springs.toMutableList()
-        val firstUnknown = newSprings.indexOfFirst { it is Spring.Unknown }
-        newSprings[firstUnknown] = spring
+        newSprings[i] = spring
 
-        solve(Row(newSprings, row.contGroupDamaged))
+        val newContGroupDamaged = row.contGroupDamaged.toMutableList()
+        if (spring is Spring.Damaged) {
+//            if (newContGroupDamaged.isEmpty()) {
+//                return 0
+//            }
+            require(newContGroupDamaged[0] > 0)
+            newContGroupDamaged[0] = newContGroupDamaged[0] - 1
+            var incr: Int
+            if (newContGroupDamaged[0] == 0) {
+                newContGroupDamaged.removeAt(0)
+                incr = 2
+            } else {
+                incr = 1
+            }
+            if (i + incr > newSprings.size) {
+                return 0
+            }
+            return solve(Row(newSprings.subList(i + incr, newSprings.size), newContGroupDamaged))
+        } else {
+            return solve(Row(newSprings, row.contGroupDamaged))
+        }
     }
 
-    fun checkCanBeValid(row: Row): Any {
-//        println("Solving: $row")
+    fun isSolved(row: Row): Boolean {
+//        println("Checking solution: $row")
         val damaged = mutableMapOf<Int, Int>()
         var index = -1
         var prev: Spring? = null
-        var hasUnknown = false
         for (spring in row.springs) {
-            if (spring is Spring.Unknown) {
-                hasUnknown = true
-                break
-            }
+            require(spring !is Spring.Unknown)
             if (spring is Spring.Damaged) {
                 if (prev is Spring.Operational || prev == null) {
                     index++
@@ -120,28 +120,11 @@ class Solve() {
             prev = spring
         }
 
-        if (!hasUnknown) {
-            if (damaged == row.damagedByIndex) {
-                println("Solution: $row")
-                return Outcome.Solution
-            } else {
-                return Outcome.Stop
-            }
+        if (damaged == row.damagedByIndex) {
+            println("Solution: $row")
+            return true
         } else {
-            val expected = row.damagedByIndex
-            val actual = damaged
-            if (actual.size > expected.size) {
-                return Outcome.Stop
-            }
-
-            for ((i, actualCount) in actual) {
-                val expectedCount = expected.getValue(i)
-                if (actualCount > expectedCount) {
-                    return Outcome.Stop
-                }
-            }
-
-            return Outcome.Continue
+            return false
         }
     }
 }
@@ -172,8 +155,8 @@ fun main() {
                 val row = parseSpringLine(line)
                 println("Line $i: $row")
                 val solve = Solve()
-                solve.solve(row)
-                println("Single row: solutions: ${solve.solutions}")
+                val solution = solve.solve(row)
+                println("Line $i solutions: ${solution}")
 
 //                val rowUnfolded = row.unfold()
 //                println("Line $i: $rowUnfolded")
@@ -185,10 +168,8 @@ fun main() {
 //                val times = solveUnfolded.solutions / solve.solutions
 //
 //                val total = solve.solutions * times * times * times * times
-                sum += solve.solutions
-                require(sum >= 0)
-                require(solve.solutions >= 0)
-                println("Solutions: $sum")
+                sum += solution
+//                println("Solutions: $sum")
 //            break
             }
         }
@@ -204,6 +185,7 @@ fun main() {
 
     val part1Expected = ""
     val part1 = part1(testInput)
+    require(part1 == 21L)
     println("(Test) Part 1: expected: $part1Expected, got: $part1")
 
 //    val part2Expected = ""
@@ -214,6 +196,7 @@ fun main() {
 //
     val part1Real = part1(input)
     println("(Real) Part 1: 7173 $part1Real")
+    require(part1Real == 7173L)
 //
 //    val part2Real = part2(input)
 //    println("(Real) Part 2: $part2Real")
