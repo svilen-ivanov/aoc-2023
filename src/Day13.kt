@@ -4,6 +4,7 @@ sealed class Item {
             return "."
         }
     }
+
     data object Rock : Item() {
         override fun toString(): String {
             return "#"
@@ -28,14 +29,57 @@ data class Mirror(
     }
 
     fun findMirror(): Int {
-        val prev = lines.first()
-        for (i in 1 ..< lines.size) {
-            val line = lines[i]
-            if (line.items == prev.items) {
-                return i
+        val pairs = generateSequence(0) { it + 1 }.take(lines.size - 1)
+        for ((l, r) in pairs.windowed(2)) {
+            val isMirror = findMirrorPivot(l, r)
+            if (isMirror) {
+                return l + 1
             }
         }
         return -1
+    }
+
+    private fun findMirrorPivot(l: Int, r: Int): Boolean {
+        var i = 0
+        while (true) {
+            if ((l - i) < 0 || (r + i) >= lines.size) {
+                return true
+            }
+            val left = lines[l - i]
+            val right = lines[r + i]
+            if (left != right) {
+                return false
+            }
+            i++
+        }
+    }
+
+//    private fun findMirror(pivot1: Int): Int {
+//        for (i in 0 until lines.size) {
+//            if (i == pivot) {
+//                continue
+//            }
+//            val line = lines[i]
+//            val prev = lines[i - 1]
+//            val next = lines[i + 1]
+//            if (line.items[pivot] == Item.Rock) {
+//                if (prev.items[pivot] == Item.Ash && next.items[pivot] == Item.Ash) {
+//                    return i
+//                }
+//            }
+//        }
+//    }
+
+    fun transpose(): Mirror {
+        val newLines = mutableListOf<Line>()
+        for (i in 0 until lines.first().items.size) {
+            val newLine = Line(mutableListOf())
+            newLines.add(newLine)
+            for (line in lines) {
+                newLine.items.add(line.items[i])
+            }
+        }
+        return Mirror(newLines)
     }
 }
 
@@ -69,13 +113,27 @@ fun main() {
 
     fun part1(input: List<String>): Any {
         val mirrors = parseMirrors(input)
+        var sum = 0L
         for (mirror in mirrors) {
-            println("Mirror: $mirror")
-            val index = mirror.findMirror()
-            println("Mirror index: $index")
+            val horizontal = mirror.findMirror()
+            val mirrorX1 = mirror.transpose()
+            val mirrorX2 = mirrorX1.transpose()
+            val mirror2 = mirrorX2.transpose()
+            val vertical = mirror2.findMirror()
+            require(horizontal != 0)
+            require(vertical != 0)
+            require(!(horizontal > 0 && vertical > 0))
+            if (horizontal >= 0) {
+                sum += horizontal * 100L
+            }
+
+            if (vertical >= 0) {
+                sum += vertical
+            }
+
         }
 //        println("Mirrors: $mirrors")
-        return input.size
+        return sum
     }
 
     fun part2(input: List<String>): Any {
@@ -95,8 +153,8 @@ fun main() {
 
     val input = readInput("Day${day}")
 
-//    val part1Real = part1(input)
-//    println("(Real) Part 1: $part1Real")
+    val part1Real = part1(input)
+    println("(Real) Part 1: $part1Real")
 
 //    val part2Real = part2(input)
 //    println("(Real) Part 2: $part2Real")
