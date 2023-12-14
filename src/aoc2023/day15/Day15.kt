@@ -27,7 +27,7 @@ fun main() {
     val input = readInput(day, "Day${day}")
 
     val part1Real = part1(input)
-    println("(Real) Part 1: 108641 $part1Real")
+    println("(Real) Part 1: $part1Real")
 
     val part2Real = part2(input)
     println("(Real) Part 2: $part2Real")
