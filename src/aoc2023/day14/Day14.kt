@@ -24,7 +24,7 @@ sealed class DishItem {
 
         fun checkSequence() {
             if (sequenceIndex == null) {
-                sequenceIndex = findBackToBackSequences(finalPositions)
+//                sequenceIndex = aoc2023.day15.findBackToBackSequences(finalPositions)
             }
         }
 
