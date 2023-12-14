@@ -1,6 +1,8 @@
 package aoc2023.day14
 
 import readInput
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 data class Iteration(val i: Int, val load: Long)
 
@@ -186,7 +188,10 @@ fun main() {
         val pos2 = mutableMapOf<Int, Set<Point>>()
         val currentPositions = mutableMapOf<Set<Point>, Iteration>()
         for (i in 1..1000) {
-            val currentPos = dish.tilt()
+            val (currentPos, v) = measureTimedValue {
+                dish.tilt()
+            }
+            println(v)
             if (currentPositions.contains(currentPos)) {
                 println("Found duplicate at $i")
                 currentPositions.entries.sortedBy { (k, v) -> v.i }.forEach { (p, l) ->
@@ -228,21 +233,3 @@ fun main() {
 //    val part2Real = part2(input)
 //    println("(Real) Part 2: $part2Real")
 }
-
-//fun test() {
-//    val list = listOf(1, 10, 20, 10, 20, 10, 20, 10)
-//    findBackToBackSequences(list)
-//}
-fun <T> findBackToBackSequences(list: List<T>): Int? {
-    for (length in (2..(list.size / 2)).reversed()) {
-        for (i in 0..(list.size - 2 * length)) {
-            if (list.subList(i, i + length) == list.subList(i + length, i + 2 * length)) {
-                println("Back-to-back sequence found: ${list.subList(i, i + length)} starting at index $i")
-                return i
-            }
-        }
-    }
-//    println("No back-to-back sequences found")
-    return null
-}
-
