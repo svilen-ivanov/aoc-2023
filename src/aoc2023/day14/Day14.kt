@@ -2,6 +2,25 @@ package aoc2023.day14
 
 import readInput
 
+sealed class DishItem {
+    abstract val char: String
+
+    object Empty : DishItem() {
+        override val char = "."
+    }
+
+    object Cube : DishItem() {
+        override val char = "#"
+    }
+
+    object Round : DishItem() {
+        override val char = "O"
+    }
+
+    override fun toString(): String {
+        return char
+    }
+}
 fun main() {
     val day = "14"
 
