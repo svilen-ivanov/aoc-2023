@@ -13,7 +13,7 @@ sealed class DishItem {
         override val char = "#"
     }
 
-    object Round : DishItem() {
+    class Round(val i: Int) : DishItem() {
         override val char = "O"
     }
 
@@ -54,10 +54,55 @@ class Dish {
     }
 
     fun getLoad(): Long {
-        val rounds = dish.entries.filter {  (p, i) -> i is DishItem.Round }.map { (p, i) -> p
+        val rounds = dish.entries.filter { (p, i) -> i is DishItem.Round }.map { (p, i) ->
             dim.y - p.y + 1
         }.sum()
         return rounds.toLong()
+    }
+
+    fun tilt(vector: Point) {
+        var stop = false
+        while (!stop) {
+            stop = true
+            for (y in 0..dim.y) {
+                for (x in 0..dim.x) {
+                    val currentPoint = Point(x, y)
+                    val prevPoint = currentPoint + vector
+                    val prev = dish[prevPoint]
+                    val current = dish[currentPoint]
+                    if (current is DishItem.Round && prev is DishItem.Empty) {
+                        stop = false
+                        dish[prevPoint] = current
+                        dish[currentPoint] = prev
+                    }
+                }
+            }
+        }
+    }
+
+//    1_000_000_000
+    fun tilt() {
+        val vectors = listOf(Point(0, -1), Point(-1, 0), Point(0, 1), Point(1, 0))
+        for (vector in vectors) {
+            tilt(vector)
+        }
+    }
+
+    fun findRepeat() {
+        tilt()
+        tilt()
+        println(this)
+//        val first = dish.toMutableMap()
+//        var count = 0
+//        while (true) {
+//            println("Count: $count")
+//            tilt()
+//            if (first == dish) {
+//                println("Found repeat after $count tilts")
+//                return
+//            }
+//            count++
+//        }
     }
 }
 
@@ -66,6 +111,7 @@ fun main() {
 
     fun part1(input: List<String>): Any {
         val dish = Dish()
+        var count = 0
         for (y in input.indices) {
             for (x in input[y].indices) {
                 val point = Point(x, y)
@@ -73,14 +119,20 @@ fun main() {
                     point, when (input[y][x]) {
                         '.' -> DishItem.Empty
                         '#' -> DishItem.Cube
-                        'O' -> DishItem.Round
+                        'O' -> DishItem.Round(count++)
                         else -> throw Exception("Unknown item")
                     }
                 )
             }
         }
 
-        println(dish)
+//        dish.tilt(Point(0, -1))
+//        println("$dish")
+//        dish.tilt()
+//        dish.tilt()
+//        dish.tilt()
+
+        dish.findRepeat()
 
         val result = dish.getLoad()
         return result
@@ -101,11 +153,11 @@ fun main() {
 //    val part2 = part2(testInput)
 //    println("(Test) Part 2: expected: $part2Expected, got: $part2")
 //
-//    val input = readInput(day, "Day${day}")
+    val input = readInput(day, "Day${day}")
 //
 //    val part1Real = part1(input)
 //    println("(Real) Part 1: $part1Real")
-//
+
 //    val part2Real = part2(input)
 //    println("(Real) Part 2: $part2Real")
 }
