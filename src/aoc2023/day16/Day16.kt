@@ -116,6 +116,7 @@ data class Contraption(val map: MutableMap<Point, Item>) {
 }
 
 class Solve(val contraption: Contraption) {
+    val visitedPoints = mutableMapOf<Point, Compass>()
     val visited = mutableSetOf<Vector>()
     fun solve(current: Vector) {
         while (true) {
@@ -125,9 +126,11 @@ class Solve(val contraption: Contraption) {
                 return
             }
             visited.add(current)
+            visitedPoints[current.point] = current.direction
+            println(this)
 
             val newDirections = item.changeDirection(current.direction)
-            newDirections.forEach {
+            for (it in newDirections.take(1)) {
                 val newVector = Vector(it, current.point + it.next)
                 if (visited.contains(newVector)) {
                     println("Loop")
@@ -135,7 +138,20 @@ class Solve(val contraption: Contraption) {
                 }
                 solve(newVector)
             }
+        }
+    }
 
+    override fun toString(): String {
+        return buildString {
+            for (y in 0..contraption.dim.y) {
+                for (x in 0..contraption.dim.x) {
+                    val point = Point(x, y)
+                    val symbol = contraption.map.getValue(point).symbol
+
+                    append(visitedPoints[point]?.let{ "#" } ?: symbol)
+                }
+                appendLine()
+            }
         }
     }
 
@@ -166,6 +182,8 @@ fun main() {
     fun part1(input: List<String>): Any {
         val contraption = parse(input)
         println(contraption)
+        val solve = Solve(contraption)
+        solve.solve(Vector(Compass.EAST, Point(0, 0)))
         return contraption
     }
 
@@ -180,15 +198,15 @@ fun main() {
     val part1 = part1(testInput)
     println("(Test) Part 1: expected: $part1Expected, got: $part1")
 
-    val part2Expected = ""
-    val part2 = part2(testInput)
-    println("(Test) Part 2: expected: $part2Expected, got: $part2")
+//    val part2Expected = ""
+//    val part2 = part2(testInput)
+//    println("(Test) Part 2: expected: $part2Expected, got: $part2")
 
     val input = readInput(day, "Day${day}")
 
-    val part1Real = part1(input)
-    println("(Real) Part 1: $part1Real")
+//    val part1Real = part1(input)
+//    println("(Real) Part 1: $part1Real")
 
-    val part2Real = part2(input)
-    println("(Real) Part 2: $part2Real")
+//    val part2Real = part2(input)
+//    println("(Real) Part 2: $part2Real")
 }
