@@ -1,6 +1,7 @@
 package aoc2023.day16
 
 import readInput
+import kotlin.time.measureTimedValue
 
 data class Point(val x: Int, val y: Int) {
     operator fun plus(other: Point): Point {
@@ -11,17 +12,13 @@ data class Point(val x: Int, val y: Int) {
 data class Vector(
     val direction: Compass,
     val point: Point,
-) {
-    fun next() = Vector(direction, point + direction.next)
-}
+)
 
 enum class Compass(val next: Point) {
     NORTH(Point(0, -1)),
     EAST(Point(1, 0)),
     SOUTH(Point(0, 1)),
     WEST(Point(-1, 0));
-
-    fun vector() = Vector(this, next)
 }
 
 typealias DirectionLambda = (Compass) -> Compass
@@ -47,8 +44,8 @@ val left: DirectionLambda = {
 sealed class Item {
     abstract val position: Point
     abstract val symbol: String
-
     abstract fun changeDirection(compass: Compass): List<Compass>
+
     data class Empty(override val position: Point) : Item() {
         override val symbol = "."
         override fun changeDirection(compass: Compass) = listOf(compass)
@@ -116,28 +113,23 @@ data class Contraption(val map: MutableMap<Point, Item>) {
 }
 
 class Solve(val contraption: Contraption) {
-    val visitedPoints = mutableMapOf<Point, Compass>()
+    val visitedPoints = mutableSetOf<Point>()
     val visited = mutableSetOf<Vector>()
     fun solve(current: Vector) {
-        while (true) {
-            val item = contraption.map[current.point]
-            if (item == null) {
-                println("Out of bounds")
+        val item = contraption.map[current.point]
+        if (item == null) {
+            return
+        }
+        visited += current
+        visitedPoints += current.point
+
+        val newDirections = item.changeDirection(current.direction)
+        for (newCompass in newDirections) {
+            val newVector = Vector(newCompass, current.point + newCompass.next)
+            if (visited.contains(newVector)) {
                 return
             }
-            visited.add(current)
-            visitedPoints[current.point] = current.direction
-            println(this)
-
-            val newDirections = item.changeDirection(current.direction)
-            for (it in newDirections.take(1)) {
-                val newVector = Vector(it, current.point + it.next)
-                if (visited.contains(newVector)) {
-                    println("Loop")
-                    return
-                }
-                solve(newVector)
-            }
+            solve(newVector)
         }
     }
 
@@ -148,13 +140,20 @@ class Solve(val contraption: Contraption) {
                     val point = Point(x, y)
                     val symbol = contraption.map.getValue(point).symbol
 
-                    append(visitedPoints[point]?.let{ "#" } ?: symbol)
+                    append(visitedPoints.contains(point).let { if (it) "#" else symbol })
                 }
                 appendLine()
             }
         }
     }
+}
 
+class Solve2(val contraption: Contraption) {
+    fun solveFor(start: Vector): Int {
+        val solve = Solve(contraption)
+        solve.solve(start)
+        return solve.visitedPoints.size
+    }
 }
 
 fun main() {
@@ -182,31 +181,53 @@ fun main() {
     fun part1(input: List<String>): Any {
         val contraption = parse(input)
         println(contraption)
-        val solve = Solve(contraption)
-        solve.solve(Vector(Compass.EAST, Point(0, 0)))
-        return contraption
+        val solve = Solve2(contraption)
+        val start = Vector(Compass.EAST, Point(0, 0))
+        return solve.solveFor(start)
     }
 
     fun part2(input: List<String>): Any {
-        return input.size
+        val contraption = parse(input)
+        val solve = Solve2(contraption)
+        var energized = 0
+        for (x in 0..contraption.dim.x) {
+            val r = solve.solveFor(Vector(Compass.SOUTH, Point(x, 0)))
+            energized = maxOf(r, energized)
+        }
+
+        for (x in 0..contraption.dim.x) {
+            val r = solve.solveFor(Vector(Compass.NORTH, Point(x, contraption.dim.y)))
+            energized = maxOf(r, energized)
+        }
+
+        for (y in 0..contraption.dim.y) {
+            val r = solve.solveFor(Vector(Compass.EAST, Point(0, y)))
+            energized = maxOf(r, energized)
+        }
+
+        for (y in 0..contraption.dim.y) {
+            val r = solve.solveFor(Vector(Compass.WEST, Point(contraption.dim.x, y)))
+            energized = maxOf(r, energized)
+        }
+        return energized
     }
 
     // test if implementation meets criteria from the description, like:
     val testInput = readInput(day, "Day${day}_test")
 
-    val part1Expected = ""
-    val part1 = part1(testInput)
-    println("(Test) Part 1: expected: $part1Expected, got: $part1")
+//    val part1Expected = ""
+//    val part1 = part1(testInput)
+//    println("(Test) Part 1: expected: $part1Expected, got: $part1")
 
-//    val part2Expected = ""
-//    val part2 = part2(testInput)
-//    println("(Test) Part 2: expected: $part2Expected, got: $part2")
+    val part2Expected = ""
+    val part2 = part2(testInput)
+    println("(Test) Part 2: expected: $part2Expected, got: $part2")
 
     val input = readInput(day, "Day${day}")
 
 //    val part1Real = part1(input)
 //    println("(Real) Part 1: $part1Real")
 
-//    val part2Real = part2(input)
-//    println("(Real) Part 2: $part2Real")
+    val part2Real = measureTimedValue { part2(input) }
+    println("(Real) Part 2: $part2Real")
 }
