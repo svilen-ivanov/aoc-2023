@@ -2,6 +2,8 @@ package aoc2023.day16
 
 import readInput
 
+data class Point(val x: Int, val y: Int)
+
 fun main() {
     val day = "16"
 
@@ -14,7 +16,7 @@ fun main() {
     }
 
     // test if implementation meets criteria from the description, like:
-    val testInput = readInput("Day${day}_test")
+    val testInput = readInput(day, "Day${day}_test")
 
     val part1Expected = ""
     val part1 = part1(testInput)
@@ -24,7 +26,7 @@ fun main() {
     val part2 = part2(testInput)
     println("(Test) Part 2: expected: $part2Expected, got: $part2")
 
-    val input = readInput("Day${day}")
+    val input = readInput(day, "Day${day}")
 
     val part1Real = part1(input)
     println("(Real) Part 1: $part1Real")
