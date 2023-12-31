@@ -2,7 +2,6 @@ package aoc2023.day19
 
 import org.apache.commons.math3.util.ArithmeticUtils
 import org.jgrapht.graph.DefaultEdge
-import org.jgrapht.graph.DirectedAcyclicGraph
 import org.jgrapht.graph.DirectedMultigraph
 import org.jgrapht.graph.EdgeReversedGraph
 import org.jgrapht.nio.DefaultAttribute
@@ -21,7 +20,7 @@ sealed class Operator {
 }
 
 sealed class Rule {
-    data class Condition(val field: String, val operator: Operator, val value: Long, val outcome: Rule) : Rule() {
+    class Condition(val field: String, val operator: Operator, val value: Long, val outcome: Rule) : Rule() {
         fun evaluate(part: Part): Boolean {
             val partValue = when (field) {
                 "x" -> part.x
@@ -80,17 +79,16 @@ class CountRange(val rangeList: List<Rule.Condition>) {
         require(rangeList[0].operator == Operator.GreaterThan)
         require(rangeList[1].operator == Operator.LessThan)
         require(rangeList[0].value < rangeList[1].value) {
-            "Invalid reange: $rangeList"
+            "Invalid range: $rangeList"
         }
     }
 
     val size: Long
         get() {
-            if (rangeList[0].value < rangeList[1].value) {
-
-                return rangeList[1].value - rangeList[0].value - 1
+            return if (rangeList[0].value < rangeList[1].value) {
+                rangeList[1].value - rangeList[0].value - 1
             } else {
-                return 0
+                0
             }
         }
 
@@ -187,12 +185,38 @@ class Solver(val workflows: Map<String, Workflow>) {
             }
         }
 
-        var hasDuplicates = false
+        for (v in BreadthFirstIterator(g)) {
+            if (v == Vertex.Start || v == Vertex.Accept || v == Vertex.Reject) {
+                continue
+            }
+            val outgoingVert = g.outgoingEdgesOf(v).map { g.getEdgeTarget(it) }
+            require(outgoingVert.size == 2) {
+                "Vertex $v has ${outgoingVert.size} outgoing edges: ${g.outgoingEdgesOf(v)}}"
+            }
+        }
+
+        var hasDuplicates: Boolean
         do {
-           for (v in BreadthFirstIterator(g)) {
-               val outgoing = g.outgoingEdgesOf(v).map {g.getEdgeTarget(e) }
-               if (outgoin)
-           }
+            hasDuplicates = false
+            for (v in BreadthFirstIterator(g)) {
+                if (v == Vertex.Start || v == Vertex.Accept || v == Vertex.Reject) {
+                    continue
+                }
+                val outgoingVert = g.outgoingEdgesOf(v).map { g.getEdgeTarget(it) }
+                require(outgoingVert.size == 2) {
+                    "Vertex $v has ${outgoingVert.size} outgoing edges: ${g.outgoingEdgesOf(v)}}"
+                }
+                val allTheSame = outgoingVert.all { it == outgoingVert.first() }
+                if (allTheSame) {
+                    val newDest = outgoingVert.first()
+                    for (inEdge in g.incomingEdgesOf(v)) {
+                        g.addEdge(g.getEdgeSource(inEdge), newDest, Edge(inEdge.cond))
+                    }
+                    g.removeVertex(v)
+                    hasDuplicates = true
+                    break
+                }
+            }
 
         } while (hasDuplicates)
 
@@ -422,10 +446,10 @@ fun main() {
 //    val part2 = part2(testInput)
 //    println("(Test) Part 2: expected: $part2Expected, got: $part2")
 //
-//    val input = readInput(day, "Day${day}")
-//
-//    val part1Real = part1(input)
-//    println("(Real) Part 1: $part1Real")
+    val input = readInput(day, "Day${day}")
+
+    val part1Real = part1(input)
+    println("(Real) Part 1: $part1Real")
 //
 //    val part2Real = part2(input)
 //    println("(Real) Part 2: $part2Real")
