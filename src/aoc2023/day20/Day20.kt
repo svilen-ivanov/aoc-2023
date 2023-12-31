@@ -1,3 +1,7 @@
+package aoc2023.day20
+
+import readInput
+
 fun main() {
     val day = "20"
 
