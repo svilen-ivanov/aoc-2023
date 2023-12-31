@@ -1,6 +1,17 @@
 package aoc2023.day19
 
+import org.apache.commons.math3.util.ArithmeticUtils
+import org.jgrapht.graph.DefaultEdge
+import org.jgrapht.graph.DirectedAcyclicGraph
+import org.jgrapht.graph.DirectedMultigraph
+import org.jgrapht.graph.EdgeReversedGraph
+import org.jgrapht.nio.DefaultAttribute
+import org.jgrapht.nio.dot.DOTExporter
+import org.jgrapht.traverse.BreadthFirstIterator
 import readInput
+import java.io.StringWriter
+import kotlin.io.path.Path
+
 
 data class Workflow(val name: String, val rules: List<Rule>)
 
@@ -24,6 +35,29 @@ sealed class Rule {
                 is Operator.GreaterThan -> partValue > value
             }
         }
+
+        fun reverse(): Condition {
+            return Condition(
+                field, when (operator) {
+                    is Operator.LessThan -> Operator.GreaterThan
+                    is Operator.GreaterThan -> Operator.LessThan
+                }, value + (
+                        when (operator) {
+                            is Operator.LessThan -> -1
+                            is Operator.GreaterThan -> 1
+                        }
+                        ), outcome
+            )
+        }
+
+        override fun toString(): String {
+            return "$field${
+                when (operator) {
+                    is Operator.LessThan -> "<"
+                    is Operator.GreaterThan -> ">"
+                }
+            }${"%4d".format(value)}"
+        }
     }
 
     data object Accept : Rule()
@@ -38,6 +72,231 @@ data class Part(
     val s: Long,
 ) {
     val rating = x + m + a + s
+}
+
+class CountRange(val rangeList: List<Rule.Condition>) {
+    init {
+        require(rangeList.size == 2)
+        require(rangeList[0].operator == Operator.GreaterThan)
+        require(rangeList[1].operator == Operator.LessThan)
+        require(rangeList[0].value < rangeList[1].value) {
+            "Invalid reange: $rangeList"
+        }
+    }
+
+    val size: Long
+        get() {
+            if (rangeList[0].value < rangeList[1].value) {
+
+                return rangeList[1].value - rangeList[0].value - 1
+            } else {
+                return 0
+            }
+        }
+
+
+}
+
+sealed class Vertex {
+    data object Start : Vertex()
+    data object Accept : Vertex()
+    data object Reject : Vertex()
+    data class Condition(val condition: Rule.Condition) : Vertex()
+}
+
+class Edge(val cond: Boolean) : DefaultEdge()
+
+class Solver(val workflows: Map<String, Workflow>) {
+    val g = DirectedMultigraph<Vertex, Edge>(Edge::class.java)
+    val reversedGraph: EdgeReversedGraph<Vertex, Edge>
+
+    init {
+        for (workflow in workflows.values) {
+            var isStart = false
+            if (workflow.name == "in") {
+                g.addVertex(Vertex.Start)
+                isStart = true
+            }
+
+            workflow.rules.windowed(2, partialWindows = true) { window ->
+                val rule = window.first()
+                when (rule) {
+                    is Rule.Jump -> {
+
+                    }
+
+                    is Rule.Accept -> {
+
+                    }
+
+                    is Rule.Reject -> {
+
+                    }
+
+                    is Rule.Condition -> {
+                        val trueDest = when (rule.outcome) {
+                            is Rule.Accept -> Vertex.Accept
+                            is Rule.Reject -> Vertex.Reject
+                            is Rule.Jump -> Vertex.Condition(workflows[rule.outcome.nextWorkflow]!!.rules.first() as Rule.Condition)
+                            is Rule.Condition -> error("Unexpected condition")
+                        }
+                        val source = Vertex.Condition(rule)
+                        g.addVertex(source)
+                        if (isStart) {
+                            g.addVertex(Vertex.Start)
+                            g.addEdge(Vertex.Start, source, Edge(true))
+                        }
+
+                        g.addVertex(trueDest)
+                        g.addEdge(source, trueDest, Edge(true))
+
+                        require(window.size == 2)
+//                        println(workflow.name)
+                        val falseDest = when (val nextRule = window[1]) {
+                            is Rule.Accept -> Vertex.Accept
+                            is Rule.Reject -> Vertex.Reject
+                            is Rule.Jump -> Vertex.Condition(workflows[nextRule.nextWorkflow]!!.rules.first() as Rule.Condition)
+                            is Rule.Condition -> Vertex.Condition(nextRule)
+                        }
+                        g.addVertex(falseDest)
+                        g.addEdge(source, falseDest, Edge(false))
+                    }
+                }
+            }
+        }
+
+        val exporter = DOTExporter<Vertex, Edge>()
+        exporter.setEdgeAttributeProvider { edge ->
+            buildMap {
+                this["label"] = DefaultAttribute.createAttribute(
+                    if (edge.cond) "Yes" else "No"
+                )
+            }
+        }
+
+        exporter.setVertexAttributeProvider { vertex ->
+            buildMap {
+                this["label"] = DefaultAttribute.createAttribute(
+                    when (vertex) {
+                        is Vertex.Start -> "Start"
+                        is Vertex.Accept -> "Accept"
+                        is Vertex.Reject -> "Reject"
+                        is Vertex.Condition -> vertex.condition.toString()
+                    }
+                )
+            }
+        }
+
+        var hasDuplicates = false
+        do {
+           for (v in BreadthFirstIterator(g)) {
+               val outgoing = g.outgoingEdgesOf(v).map {g.getEdgeTarget(e) }
+               if (outgoin)
+           }
+
+        } while (hasDuplicates)
+
+        reversedGraph = EdgeReversedGraph(g)
+        val writer = StringWriter()
+        exporter.exportGraph(g, writer)
+        Path("src/aoc2023/day19/graph.dot").toFile().writeText(writer.toString())
+
+        val writerReverse = StringWriter()
+        exporter.exportGraph(reversedGraph, writerReverse)
+        Path("src/aoc2023/day19/graph_reverse.dot").toFile().writeText(writerReverse.toString())
+
+    }
+
+    fun collectRules(vertex: Vertex, rules: List<Rule.Condition>, allRules: MutableList<List<Rule.Condition>>) {
+        if (vertex == Vertex.Start) {
+            allRules.add(rules.reversed())
+            return
+        }
+        reversedGraph.outgoingEdgesOf(vertex).forEach { edge ->
+            val nextVertex = reversedGraph.getEdgeTarget(edge)
+            val newRules = when (nextVertex) {
+                is Vertex.Condition -> rules +
+                        if (edge.cond) {
+                            nextVertex.condition
+                        } else {
+                            nextVertex.condition.reverse()
+                        }
+
+                else -> rules
+            }
+            collectRules(nextVertex, newRules, allRules)
+        }
+    }
+
+    fun runMe() {
+        val allRules = mutableListOf<List<Rule.Condition>>()
+        collectRules(Vertex.Accept, emptyList(), allRules)
+        allRules.forEach {
+            println(it)
+        }
+        val sorted = allRules.map {
+            val newRules = listOf(
+                Rule.Condition("x", Operator.GreaterThan, 0, Rule.Accept),
+                Rule.Condition("x", Operator.LessThan, 4001, Rule.Accept),
+                Rule.Condition("m", Operator.GreaterThan, 0, Rule.Accept),
+                Rule.Condition("m", Operator.LessThan, 4001, Rule.Accept),
+                Rule.Condition("a", Operator.GreaterThan, 0, Rule.Accept),
+                Rule.Condition("a", Operator.LessThan, 4001, Rule.Accept),
+                Rule.Condition("s", Operator.GreaterThan, 0, Rule.Accept),
+                Rule.Condition("s", Operator.LessThan, 4001, Rule.Accept),
+            ) + it
+            val sorted = newRules.groupBy { it.field }.mapValues {
+                val sorted = it.value.sortedWith(compareBy<Rule.Condition> {
+                    when (it.operator) {
+                        is Operator.GreaterThan -> 1
+                        is Operator.LessThan -> 2
+                    }
+                }.then(compareBy { it.value }))
+
+                println(sorted)
+                listOf(
+                    sorted.last { it.operator == Operator.GreaterThan },
+                    sorted.first { it.operator == Operator.LessThan })
+
+            }
+            println("$it -> $sorted")
+//            println("$sorted")
+            sorted
+        }
+        val x = sorted.sumOf {
+            val combinations = it.entries.fold(1L) { a, (k, v) ->
+                val c = CountRange(v)
+                ArithmeticUtils.mulAndCheck(a, c.size)
+            }
+            val x = it.entries.joinToString(", ") { (k, v) ->
+                val c = CountRange(v)
+                "$k: $v (${c.size})"
+            }
+            println("$it -> $x -> $combinations")
+            combinations
+        }
+        println(x)
+        println(Long.MAX_VALUE)
+//        println(sorted)
+//        val s = sorted.map { it["s"]!! }
+//        println(s)
+//        var count = 0
+//        for (i in 1..4000) {
+//            for (rangeList in s) {
+//                require(rangeList.size == 2)
+//                require(rangeList[0].operator == Operator.GreaterThan)
+//                require(rangeList[1].operator == Operator.LessThan)
+//                if (i > rangeList[0].value && i < rangeList[1].value) {
+//                    count++
+//                    break
+//                }
+//            }
+//        }
+        // 167409079868000
+        // 150616375868000
+        //  26599296000000
+//        println(count)
+    }
 }
 
 fun main() {
@@ -114,7 +373,6 @@ fun main() {
             }
         }
         error("No accept/reject rule found")
-
     }
 
     fun part1(input: List<String>): Any {
@@ -135,6 +393,9 @@ fun main() {
                 parts += parseParts(line)
             }
         }
+
+        val solver = Solver(workflows)
+        solver.runMe()
 
         var total = 0L
         for (part in parts) {
