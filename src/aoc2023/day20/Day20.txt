@@ -8,7 +8,7 @@
 %fh -> dm, gr
 broadcaster -> np, mg, vd, xr
 %zz -> sq
-&rm -> rx
+&rm -> output
 %nd -> br
 %nx -> vr, vt
 %qf -> dt, dv
