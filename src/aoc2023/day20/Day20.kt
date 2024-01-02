@@ -1,6 +1,12 @@
 package aoc2023.day20
 
+import org.jgrapht.graph.DefaultEdge
+import org.jgrapht.graph.DirectedMultigraph
+import org.jgrapht.nio.DefaultAttribute
+import org.jgrapht.nio.dot.DOTExporter
 import readInput
+import java.io.StringWriter
+import kotlin.io.path.Path
 
 sealed class Pulse {
     data object Low : Pulse() {
@@ -8,6 +14,7 @@ sealed class Pulse {
             return "-low->"
         }
     }
+
     data object High : Pulse() {
         override fun toString(): String {
             return "-high->"
@@ -15,7 +22,7 @@ sealed class Pulse {
     }
 }
 
-data class SendPulse(val pulse: Pulse, val from: Module)
+data class SendPulse(val pulse: Pulse, val from: Module, val iter: Long)
 
 data class Counter(var lows: Long, var highs: Long, var pushes: Long) {
     override fun toString(): String {
@@ -24,8 +31,8 @@ data class Counter(var lows: Long, var highs: Long, var pushes: Long) {
 }
 
 class PulseSender(val counter: Counter) {
-
     private val affectedModules = mutableSetOf<Module>()
+
 
     fun sendPulse(from: Module, pulse: Pulse, dest: Module) {
         if (pulse == Pulse.Low) {
@@ -33,7 +40,7 @@ class PulseSender(val counter: Counter) {
         } else {
             counter.highs++
         }
-        dest.inbox.addLast(SendPulse(pulse, from))
+        dest.inbox.addLast(SendPulse(pulse, from, counter.pushes))
 //        println("${from.name} $pulse ${dest.name}")
         affectedModules += dest
     }
@@ -92,7 +99,7 @@ sealed class Module {
                 pulseSender.sendPulse(this, Pulse.Low, it)
             }
             pulseSender.processInbox()
-            println(counter)
+//            println(counter)
         }
 
         override fun processInbox(pulseSender: PulseSender) {
@@ -212,7 +219,8 @@ sealed class Module {
         override fun processInbox(pulseSender: PulseSender) {
 //            println("Processing inbox for $name: $inbox")
             while (inbox.isNotEmpty()) {
-                val (pulse, from) = inbox.removeFirst()
+                val (pulse, from, iter) = inbox.removeFirst()
+                checkPulse(pulse, from, iter)
                 require(from in inputs)
                 state[from] = pulse
                 val newPulse = if (state.values.all { it == Pulse.High }) {
@@ -223,6 +231,15 @@ sealed class Module {
                 outputs.forEach {
                     pulseSender.sendPulse(this, newPulse, it)
                 }
+            }
+        }
+
+        fun checkPulse(pulse: Pulse, from: Module, iter: Long) {
+            if (name != "rm") {
+                return
+            }
+            if (pulse == Pulse.High) {
+                println("High pulse from ${from.name} on push $iter")
             }
         }
 
@@ -247,7 +264,9 @@ sealed class Module {
     }
 }
 
+
 class Configuration(val modules: List<Module>) {
+
     init {
         val byName = modules.groupBy { it.name }
         require(byName.all { it.value.size == 1 }) {
@@ -266,9 +285,47 @@ class Configuration(val modules: List<Module>) {
 //        }
     }
 
+    fun exportGraph() {
+        val g = DirectedMultigraph<Module, DefaultEdge>(DefaultEdge::class.java)
+        modules.forEach { source ->
+            g.addVertex(source)
+            source.outputs.forEach { dest ->
+                g.addVertex(dest)
+                g.addEdge(source, dest)
+            }
+        }
+        val exporter = DOTExporter<Module, DefaultEdge>()
+//        exporter.setEdgeAttributeProvider { edge ->
+//            buildMap {
+//                this["label"] = DefaultAttribute.createAttribute(
+//                    if (edge.cond) "Yes" else "No"
+//                )
+//            }
+//        }
+
+        exporter.setVertexAttributeProvider { vertex ->
+            buildMap {
+                this["label"] = DefaultAttribute.createAttribute(
+                    "${
+                        when(vertex) {
+                            is Module.Button -> ""
+                            is Module.Output -> ""
+                            is Module.Broadcaster -> ""
+                            is Module.FlipFlop -> "%"
+                            is Module.Conjunction -> "&"
+                        }
+                    }${vertex.name}"
+                )
+            }
+        }
+        val writer = StringWriter()
+        exporter.exportGraph(g, writer)
+        Path("src/aoc2023/day20/graph.dot").toFile().writeText(writer.toString())
+    }
+
     fun pushButton() {
         val button = modules.filterIsInstance<Module.Button>().single()
-        repeat(1000) {
+        repeat(1000000) {
             button.push()
         }
 //        println("--- Push 1 ---")
@@ -303,6 +360,7 @@ fun main() {
             }
         }
         val c = Configuration(modules)
+//        c.exportGraph()
         c.pushButton()
         return input.size
     }
@@ -326,7 +384,7 @@ fun main() {
 
     val part1Real = part1(input)
     println("(Real) Part 1: $part1Real")
-
+//
 //    val part2Real = part2(input)
 //    println("(Real) Part 2: $part2Real")
 }
