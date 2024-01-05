@@ -1,7 +1,8 @@
 rootProject.name = "aoc-2023"
 
-dependencyResolutionManagement {
+pluginManagement {
     repositories {
-        mavenCentral()
+        gradlePluginPortal()
+        mavenLocal()
     }
 }
