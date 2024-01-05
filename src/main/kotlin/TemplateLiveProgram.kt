@@ -16,7 +16,7 @@ fun main() = application {
     }
     oliveProgram {
         extend {
-            drawer.clear(ColorRGBa.PINK)
+            drawer.clear(ColorRGBa.BLACK)
         }
     }
 }
