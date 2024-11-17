@@ -16,7 +16,7 @@ broadcaster -> np, mg, vd, xr
 %dm -> nf, gr
 %sq -> kj
 %bv -> fp, xm
-%br -> kt
+%br -> ktnew
 %mg -> dz, gr
 &dt -> vd, dv, dh, hm, ks, hd, kq
 %ks -> qf
